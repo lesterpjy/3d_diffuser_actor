@@ -137,6 +137,9 @@ class TrainTester(BaseTrainTester):
             dense_interpolation=bool(self.args.dense_interpolation),
             interpolation_length=self.args.interpolation_length
         )
+
+        print(f"DEBUG: Length of train_dataset: {len(train_dataset)}")
+        print(f"DEBUG: Length of test_dataset: {len(test_dataset)}")
         return train_dataset, test_dataset
 
     def get_model(self):
@@ -440,12 +443,30 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     random.seed(args.seed)
 
+    # <<< --- ADD/MODIFY THESE LINES --- >>>
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = False
+    torch.backends.cudnn.enabled = True # Explicitly enable
+    print(f"INFO: Set torch.backends.cudnn.benchmark = {torch.backends.cudnn.benchmark}")
+    print(f"INFO: Set torch.backends.cudnn.deterministic = {torch.backends.cudnn.deterministic}")
+    print(f"INFO: Set torch.backends.cudnn.enabled = {torch.backends.cudnn.enabled}")
+    # <<< --- END OF ADDITION/MODIFICATION --- >>>
+
     # DDP initialization
-    torch.cuda.set_device(args.local_rank)
-    torch.distributed.init_process_group(backend='nccl', init_method='env://')
-    torch.backends.cudnn.enabled = True
-    torch.backends.cudnn.benchmark = True
-    torch.backends.cudnn.deterministic = True
+    if "LOCAL_RANK" in os.environ: # Check if DDP is being used
+        args.local_rank = int(os.environ["LOCAL_RANK"])
+        torch.cuda.set_device(args.local_rank)
+        torch.distributed.init_process_group(backend='nccl', init_method='env://')
+    else: # Handle non-DDP case or set a default
+        args.local_rank = 0
+        # Potentially set torch.cuda.set_device(0) if not DDP but still want specific GPU
+
+    # # DDP initialization
+    # torch.cuda.set_device(args.local_rank)
+    # torch.distributed.init_process_group(backend='nccl', init_method='env://')
+    # torch.backends.cudnn.enabled = True
+    # torch.backends.cudnn.benchmark = True
+    # torch.backends.cudnn.deterministic = True
 
     # Run
     train_tester = TrainTester(args)

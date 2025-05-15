@@ -105,6 +105,7 @@ class BaseTrainTester:
         """Run main training/testing pipeline."""
         # Get loaders
         train_loader, test_loader = self.get_loaders(collate_fn)
+        print(f"DEBUG: Length of train_loader.dataset: {len(train_loader.dataset)}")
 
         # Get model
         model = self.get_model()

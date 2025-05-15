@@ -25,6 +25,7 @@ class ModifiedResNetFeatures(ModifiedResNet):
 
     def forward(self, x: torch.Tensor):
         x = x.type(self.conv1.weight.dtype)
+        print(f"CLIP Bottleneck input x shape: {x.shape}, dtype: {x.dtype}, device: {x.device}")
         x = self.relu1(self.bn1(self.conv1(x)))
         x = self.relu2(self.bn2(self.conv2(x)))
         x0 = self.relu3(self.bn3(self.conv3(x)))

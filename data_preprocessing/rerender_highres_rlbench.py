@@ -400,6 +400,14 @@ def run_all_variations(i, lock, task_index, variation_count, results, file_lock,
 
     tasks_with_problems = results[i] = ''
 
+    print(f"Process {i}: About to launch RLBench environment...")
+    try:
+        rlbench_env.launch()
+        print(f"Process {i}: RLBench environment launched successfully.")
+    except Exception as e:
+        print(f"Process {i}: ERROR during rlbench_env.launch(): {e}")
+        raise e
+
     while True:
         # with lock:
         if task_index.value >= num_tasks:
@@ -408,7 +416,19 @@ def run_all_variations(i, lock, task_index, variation_count, results, file_lock,
 
         t = tasks[task_index.value]
 
-        task_env = rlbench_env.get_task(t)
+        # === DEBUG PRINT 4 ===
+        print(f"Process {i}: Getting task: {t.__name__}")
+        try:
+            task_env = rlbench_env.get_task(t)
+            # === DEBUG PRINT 5 ===
+            print(f"Process {i}: Got task environment. Variation count: {task_env.variation_count()}")
+        except Exception as e:
+            print(f"Process {i}: ERROR during rlbench_env.get_task({t.__name__}): {e}")
+            # Handle error - maybe skip task or break
+            task_index.value += 1 # Ensure we move to next task index if get_task fails
+            continue # Skip to next iteration of outer while loop
+
+        # task_env = rlbench_env.get_task(t)
         possible_variations = task_env.variation_count()
 
         variation_path = os.path.join(
